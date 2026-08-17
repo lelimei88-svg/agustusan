@@ -1,0 +1,6 @@
+{
+  "name": "Pendaftaran Lomba Agustusan",
+  "description": "Website pendaftaran lomba 17 Agustus Semarak Kemerdekaan RI ke-81 dengan Panel Admin, sistem Fair Play (3-4 orang & rentang usia max 1 tahun), Diagram Turnamen (Tournament Bracket), Timer 5 Detik undian, dan Pemutar Lagu Kemerdekaan.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
