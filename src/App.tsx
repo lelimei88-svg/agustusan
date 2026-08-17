@@ -15,6 +15,12 @@ import { AdminLoginModal } from './components/AdminLoginModal';
 import { MusicPlayerWidget } from './components/MusicPlayerWidget';
 import { Footer } from './components/Footer';
 import { Shield } from 'lucide-react';
+import { testFirestoreConnection } from './firebase';
+import {
+  saveTicketToFirestore,
+  deleteTicketFromFirestore,
+  subscribeToRegistrations,
+} from './services/firestoreService';
 
 export default function App() {
   // LocalStorage keys
@@ -48,7 +54,7 @@ export default function App() {
     return INITIAL_COMPETITIONS;
   });
 
-  // Registered tickets state with seed initializers
+  // Registered tickets state with seed initializers & Cloud Firestore Sync
   const [registeredTickets, setRegisteredTickets] = useState<RegisteredTicket[]>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY_TICKETS);
@@ -68,7 +74,28 @@ export default function App() {
   const [activeTicketModal, setActiveTicketModal] = useState<RegisteredTicket | null>(null);
   const [isTicketsDrawerOpen, setIsTicketsDrawerOpen] = useState(false);
 
-  // Sync to local storage
+  // Initialize and test Firebase connection
+  useEffect(() => {
+    testFirestoreConnection();
+  }, []);
+
+  // Realtime Cloud Firestore Synchronization for Registrations
+  useEffect(() => {
+    const unsubscribe = subscribeToRegistrations(
+      (firestoreTickets) => {
+        if (firestoreTickets && firestoreTickets.length > 0) {
+          setRegisteredTickets(firestoreTickets);
+        }
+      },
+      (err) => {
+        console.warn('Firestore subscription status:', err);
+      }
+    );
+
+    return () => unsubscribe();
+  }, []);
+
+  // Sync to local storage as fallback
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY_TICKETS, JSON.stringify(registeredTickets));
@@ -107,7 +134,7 @@ export default function App() {
     }
   };
 
-  const handleRegistrationSubmit = (
+  const handleRegistrationSubmit = async (
     formData: RegistrationFormData,
     comp: Competition
   ) => {
@@ -137,14 +164,17 @@ export default function App() {
       )
     );
 
-    // Save ticket to list
+    // Save ticket to local state & Firestore database
     setRegisteredTickets((prev) => [newTicket, ...prev]);
+    saveTicketToFirestore(newTicket).catch((err) => {
+      console.warn('Persisted locally, cloud sync pending:', err);
+    });
 
     // Show celebratory modal
     setActiveTicketModal(newTicket);
   };
 
-  const handleDeleteTicket = (regId: string) => {
+  const handleDeleteTicket = async (regId: string) => {
     const ticketToDelete = registeredTickets.find((t) => t.registrationId === regId);
     if (ticketToDelete) {
       // Decrement competition registration count if possible
@@ -157,6 +187,9 @@ export default function App() {
       );
     }
     setRegisteredTickets((prev) => prev.filter((t) => t.registrationId !== regId));
+    deleteTicketFromFirestore(regId).catch((err) => {
+      console.warn('Deleted locally:', err);
+    });
   };
 
   const handleRequestAdminAccess = () => {

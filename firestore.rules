@@ -1,0 +1,56 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global Helper functions
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function isValidRegistration(data) {
+      return data.registrationId is string && data.registrationId.size() > 0 && data.registrationId.size() <= 64 &&
+             data.fullName is string && data.fullName.size() > 0 && data.fullName.size() <= 100 &&
+             data.ageCategory in ['Anak-anak', 'Dewasa / Ibu-Ibu'] &&
+             data.status in ['Terdaftar', 'Hadir', 'Gugur', 'Juara'] &&
+             (!('birthDate' in data) || (data.birthDate is string && data.birthDate.size() <= 30)) &&
+             (!('address' in data) || (data.address is string && data.address.size() <= 200)) &&
+             (!('whatsapp' in data) || (data.whatsapp is string && data.whatsapp.size() <= 30)) &&
+             (!('competitionId' in data) || (data.competitionId is string && data.competitionId.size() <= 64)) &&
+             (!('competitionTitle' in data) || (data.competitionTitle is string && data.competitionTitle.size() <= 100)) &&
+             (!('assignedGroupId' in data) || (data.assignedGroupId is string && data.assignedGroupId.size() <= 64));
+    }
+
+    function isValidMatch(data) {
+      return data.matchId is string && data.matchId.size() > 0 && data.matchId.size() <= 64 &&
+             data.competitionId is string && data.competitionId.size() > 0 && data.competitionId.size() <= 64 &&
+             data.round is string && data.round.size() <= 30 &&
+             data.status in ['Pending', 'Running', 'Finished'] &&
+             (!('groupName' in data) || (data.groupName is string && data.groupName.size() <= 64)) &&
+             (!('winnerId' in data) || (data.winnerId is string && data.winnerId.size() <= 64));
+    }
+
+    // Registrations collection: public read and registration submission for community event
+    match /registrations/{registrationId} {
+      allow read: if true;
+      allow create: if isValidId(registrationId) && isValidRegistration(incoming());
+      allow update: if isValidId(registrationId) && isValidRegistration(incoming());
+      allow delete: if isValidId(registrationId);
+    }
+
+    // Tournament matches collection
+    match /tournament_matches/{matchId} {
+      allow read: if true;
+      allow create: if isValidId(matchId) && isValidMatch(incoming());
+      allow update: if isValidId(matchId) && isValidMatch(incoming());
+      allow delete: if isValidId(matchId);
+    }
+
+    // Default deny for everything else
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

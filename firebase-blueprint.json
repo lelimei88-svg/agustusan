@@ -1,0 +1,133 @@
+{
+  "entities": {
+    "Registration": {
+      "title": "Registration",
+      "description": "A single competition registration entry submitted by a participant.",
+      "type": "object",
+      "properties": {
+        "registrationId": {
+          "type": "string",
+          "description": "Unique registration ID (e.g. REG-81-001 or timestamp hash)",
+          "maxLength": 64
+        },
+        "fullName": {
+          "type": "string",
+          "description": "Full name of participant",
+          "maxLength": 100
+        },
+        "birthDate": {
+          "type": "string",
+          "description": "Birth date of participant (YYYY-MM-DD)",
+          "maxLength": 30
+        },
+        "age": {
+          "type": "number",
+          "description": "Calculated age of participant"
+        },
+        "ageCategory": {
+          "type": "string",
+          "description": "Competition category",
+          "enum": ["Anak-anak", "Dewasa / Ibu-Ibu"]
+        },
+        "address": {
+          "type": "string",
+          "description": "Address or RT/RW of participant",
+          "maxLength": 200
+        },
+        "whatsapp": {
+          "type": "string",
+          "description": "WhatsApp contact number (optional)",
+          "maxLength": 30
+        },
+        "competitionId": {
+          "type": "string",
+          "description": "Identifier of initial/primary competition",
+          "maxLength": 64
+        },
+        "competitionTitle": {
+          "type": "string",
+          "description": "Title of initial competition",
+          "maxLength": 100
+        },
+        "registeredAt": {
+          "type": "string",
+          "description": "Formatted registration date/time string",
+          "maxLength": 100
+        },
+        "status": {
+          "type": "string",
+          "description": "Registration status",
+          "enum": ["Terdaftar", "Hadir", "Gugur", "Juara"]
+        },
+        "assignedGroupId": {
+          "type": "string",
+          "description": "Assigned group or tournament slot ID",
+          "maxLength": 64
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Creation timestamp ISO string",
+          "maxLength": 64
+        }
+      },
+      "required": ["registrationId", "fullName", "ageCategory", "registeredAt", "status"]
+    },
+    "TournamentMatch": {
+      "title": "TournamentMatch",
+      "description": "A tournament match state within a competition branch.",
+      "type": "object",
+      "properties": {
+        "matchId": {
+          "type": "string",
+          "description": "Identifier of tournament match",
+          "maxLength": 64
+        },
+        "competitionId": {
+          "type": "string",
+          "description": "Identifier of competition",
+          "maxLength": 64
+        },
+        "round": {
+          "type": "string",
+          "description": "Round name (Penyisihan, Semifinal, Final)",
+          "maxLength": 30
+        },
+        "groupName": {
+          "type": "string",
+          "description": "Name of the group",
+          "maxLength": 64
+        },
+        "winnerId": {
+          "type": "string",
+          "description": "Winner ticket/participant ID",
+          "maxLength": 64
+        },
+        "status": {
+          "type": "string",
+          "description": "Status of match",
+          "enum": ["Pending", "Running", "Finished"]
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Updated timestamp",
+          "maxLength": 64
+        }
+      },
+      "required": ["matchId", "competitionId", "round", "status"]
+    }
+  },
+  "firestore": {
+    "/registrations/{registrationId}": {
+      "schema": {
+        "$ref": "#/entities/Registration"
+      },
+      "description": "Collection of all participant registrations for the 17 August competitions."
+    },
+    "/tournament_matches/{matchId}": {
+      "schema": {
+        "$ref": "#/entities/TournamentMatch"
+      },
+      "description": "Collection of tournament bracket match states and winners."
+    }
+  }
+}
